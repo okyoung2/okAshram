@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>okAshram</title>
+  <meta name="theme-color" content="#1b1712">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <style>
+    :root {
+      --bg: #1b1712;
+      --card: #26201a;
+      --card-hover: #30281f;
+      --text: #f3ead8;
+      --muted: #a89a82;
+      --accent: #e0a83c;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+      padding: max(32px, env(safe-area-inset-top)) 16px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    header { text-align: center; margin: 8px 0 32px; }
+    header .om { font-size: 40px; color: var(--accent); line-height: 1; }
+    h1 { margin: 8px 0 0; font-size: 26px; font-weight: 700; letter-spacing: 0.02em; }
+    main {
+      width: 100%;
+      max-width: 520px;
+      display: grid;
+      gap: 14px;
+    }
+    a.app {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--card);
+      color: inherit;
+      text-decoration: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s, transform 0.1s;
+    }
+    a.app:hover { background: var(--card-hover); }
+    a.app:active { transform: scale(0.98); }
+    a.app img {
+      width: 64px;
+      height: 64px;
+      flex: none;
+      border-radius: 15px;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+    }
+    .name { font-size: 19px; font-weight: 700; }
+    .desc { margin-top: 4px; font-size: 14px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="om">ॐ</div>
+    <h1>okAshram</h1>
+  </header>
+  <main id="apps"></main>
+
+  <script>
+    // 앱을 추가하려면 이 목록에 한 줄을 추가한다.
+    const APPS = [
+      { name: "산스크리트어 사전", desc: "Sanskrit Dictionary", icon: "icons/sanskrit.png", url: "https://okyoung2.github.io/sanskrit-dictionary/" },
+      { name: "타밀어 사전", desc: "Tamil Dictionary", icon: "icons/tamil.png", url: "https://okyoung2.github.io/tamil-dictionary/" },
+      { name: "만트라 반복 재생", desc: "Mantra Player", icon: "icons/mantra.png", url: "https://okyoung2.github.io/aviPlayCounter/" },
+    ];
+
+    const main = document.getElementById("apps");
+    for (const app of APPS) {
+      const a = document.createElement("a");
+      a.className = "app";
+      a.href = app.url;
+      a.innerHTML = `<img src="${app.icon}" alt=""><div><div class="name">${app.name}</div><div class="desc">${app.desc}</div></div>`;
+      main.appendChild(a);
+    }
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    }
+  </script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 // 런처 화면을 캐시해 오프라인에서도 아이콘 화면이 뜨게 한다.
 // 파일을 수정하면 CACHE 버전을 올린다.
-const CACHE = "okashram-v1";
+const CACHE = "okashram-v2";
 const FILES = [
   "./",
   "index.html",

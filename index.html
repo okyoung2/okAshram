@@ -61,6 +61,25 @@
     }
     .name { font-size: 19px; font-weight: 700; }
     .desc { margin-top: 4px; font-size: 14px; color: var(--muted); }
+    .tile { display: flex; align-items: center; gap: 8px; }
+    .tile a.app { flex: 1; min-width: 0; }
+    .move { display: none; flex-direction: column; gap: 6px; }
+    main.editing .move { display: flex; }
+    main.editing a.app { cursor: default; outline: 2px dashed rgba(224, 168, 60, 0.5); outline-offset: -2px; }
+    main.editing a.app:active { transform: none; }
+    button {
+      font: inherit;
+      color: var(--text);
+      background: var(--card);
+      border: 0;
+      border-radius: 12px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .move button { width: 52px; height: 40px; font-size: 18px; }
+    .move button:disabled { opacity: 0.3; cursor: default; }
+    #edit-btn { margin-top: 24px; min-height: 48px; padding: 10px 22px; font-size: 16px; color: var(--muted); }
+    #edit-btn.done { background: var(--accent); color: var(--bg); font-weight: 700; }
   </style>
 </head>
 <body>
@@ -69,6 +88,7 @@
     <h1>okAshram</h1>
   </header>
   <main id="apps"></main>
+  <button id="edit-btn" type="button">순서 바꾸기</button>
 
   <script>
     // 앱을 추가하려면 이 목록에 한 줄을 추가한다.
@@ -78,14 +98,81 @@
       { name: "만트라 반복 재생", desc: "Mantra Player", icon: "icons/mantra.png", url: "https://okyoung2.github.io/aviPlayCounter/" },
     ];
 
-    const main = document.getElementById("apps");
-    for (const app of APPS) {
-      const a = document.createElement("a");
-      a.className = "app";
-      a.href = app.url;
-      a.innerHTML = `<img src="${app.icon}" alt=""><div><div class="name">${app.name}</div><div class="desc">${app.desc}</div></div>`;
-      main.appendChild(a);
+    // 사용자가 정한 순서는 이 폰에만 저장한다(앱 주소 목록).
+    // APPS 에 새로 넣은 앱은 저장된 순서 뒤에 붙고, APPS 에서 뺀 앱은 무시한다.
+    const ORDER_KEY = "okashram-order";
+
+    function loadOrder() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(ORDER_KEY));
+        return Array.isArray(saved) ? saved : [];
+      } catch {
+        return [];
+      }
     }
+
+    function saveOrder(apps) {
+      try {
+        localStorage.setItem(ORDER_KEY, JSON.stringify(apps.map((app) => app.url)));
+      } catch { /* 저장할 수 없으면 이번에만 바뀐 순서로 보여 준다 */ }
+    }
+
+    function sortedApps() {
+      const order = loadOrder();
+      const rank = (app) => (order.includes(app.url) ? order.indexOf(app.url) : order.length);
+      return APPS.map((app, i) => ({ app, i }))
+        .sort((x, y) => rank(x.app) - rank(y.app) || x.i - y.i)
+        .map(({ app }) => app);
+    }
+
+    const main = document.getElementById("apps");
+    const editBtn = document.getElementById("edit-btn");
+    let apps = sortedApps();
+    let editing = false;
+
+    function move(index, delta) {
+      const to = index + delta;
+      if (to < 0 || to >= apps.length) return;
+      [apps[index], apps[to]] = [apps[to], apps[index]];
+      saveOrder(apps);
+      render();
+    }
+
+    function render() {
+      main.replaceChildren();
+      apps.forEach((app, index) => {
+        const tile = document.createElement("div");
+        tile.className = "tile";
+        const a = document.createElement("a");
+        a.className = "app";
+        a.href = app.url;
+        a.innerHTML = `<img src="${app.icon}" alt=""><div><div class="name">${app.name}</div><div class="desc">${app.desc}</div></div>`;
+        // 순서를 바꾸는 동안에는 눌러도 앱이 열리지 않는다.
+        a.addEventListener("click", (e) => { if (editing) e.preventDefault(); });
+        const moveBox = document.createElement("div");
+        moveBox.className = "move";
+        for (const [label, delta, aria] of [["▲", -1, "위로"], ["▼", 1, "아래로"]]) {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.textContent = label;
+          b.setAttribute("aria-label", `${app.name} ${aria}`);
+          b.disabled = index + delta < 0 || index + delta >= apps.length;
+          b.addEventListener("click", () => move(index, delta));
+          moveBox.appendChild(b);
+        }
+        tile.append(a, moveBox);
+        main.appendChild(tile);
+      });
+    }
+
+    editBtn.addEventListener("click", () => {
+      editing = !editing;
+      main.classList.toggle("editing", editing);
+      editBtn.classList.toggle("done", editing);
+      editBtn.textContent = editing ? "완료" : "순서 바꾸기";
+    });
+
+    render();
 
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js").catch(() => {});
